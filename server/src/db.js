@@ -6,6 +6,9 @@ export const dbConfig = {
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
+  // Most cloud MySQL providers require SSL. Set DB_SSL=true in your env
+  // to enable it (leave unset for local development).
+  ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {}),
 };
 
 export const DB_NAME = process.env.DB_NAME || 'freelio';
