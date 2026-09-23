@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Register() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   // Default to 'freelancer' if no role is specified, but switch to 'client' if the URL says so
   const initialRole = searchParams.get('role') === 'client' ? 'client' : 'freelancer';
-  
+
   const [role, setRole] = useState(initialRole);
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,31 +32,15 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Use RELATIVE path so it goes through the Vite proxy to the backend
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: formData.fullName,  // <-- Backend expects "name"
-          email: formData.email,
-          password: formData.password,
-          role: role,
-        }),
+      const user = await register({
+        name: formData.fullName, // Backend expects "name"
+        email: formData.email,
+        password: formData.password,
+        role: role,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Something went wrong. Please try again.');
-      }
-
       // Redirect based on role after successful registration
-      if (role === 'client') {
-        navigate('/dashboard/client');
-      } else {
-        navigate('/dashboard/freelancer');
-      }
+      navigate(user.role === 'client' ? '/dashboard/client' : '/dashboard/freelancer');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,7 +51,7 @@ export default function Register() {
   return (
     <div style={{ maxWidth: '450px', margin: '50px auto', padding: '20px' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Join free — it takes less than a minute.</h2>
-      
+
       {/* Role Selection Tabs */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         <button
@@ -130,16 +117,28 @@ export default function Register() {
         </div>
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••••"
-            required
-            minLength={8}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••••"
+              required
+              minLength={8}
+              style={{ width: '100%', padding: '10px', paddingRight: '48px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#2e7d32', fontWeight: 600,
+              }}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
           <small style={{ color: '#666', fontSize: '12px' }}>At least 8 characters.</small>
         </div>
 
