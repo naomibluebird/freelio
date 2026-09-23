@@ -25,7 +25,7 @@ export default function Home() {
           api.get('/stats'),
           api.get('/meta'),
           api.get('/projects/featured'),
-          api.get('/freelancers/featured'),
+         api.get('/freelancers?sort=rating&limit=6'),
         ]);
         setStats(s);
         setMeta(m);
@@ -139,9 +139,9 @@ export default function Home() {
       {!isFreelancer && featuredFreelancers.length > 0 && (
         <section className="section container">
           <div className="section-head">
-            <div>
-              <h2>Featured freelancers</h2>
-              <p>Top talent available to start soon.</p>
+                        <div>
+              <h2>Top-rated freelancers</h2>
+              <p>The highest-rated talent on Freelio right now.</p>
             </div>
             <Link to="/freelancers" className="btn btn--outline btn--sm">View all talent</Link>
           </div>

@@ -1,3 +1,4 @@
+import FreelancerCard from '../components/FreelancerCard.jsx';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, qs } from '../api/client.js';
@@ -18,6 +19,8 @@ export default function BrowseProjects() {
   const [data, setData] = useState({ projects: [], total: 0, pages: 1 });
   const [saved, setSaved] = useState(new Set());
   const [loading, setLoading] = useState(true);
+  const [topFreelancers, setTopFreelancers] = useState([]);
+
 
   const jobTypes = params.getAll('job_type');
   const workModes = params.getAll('work_mode');
@@ -28,6 +31,7 @@ export default function BrowseProjects() {
   const page = Number(params.get('page') || 1);
 
   useEffect(() => { api.get('/meta').then(setMeta); }, []);
+  useEffect(() => { api.get('/freelancers?sort=rating&limit=6').then((r) => setTopFreelancers(r.freelancers)); }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -137,11 +141,18 @@ export default function BrowseProjects() {
               <option value="oldest">Oldest</option>
             </select>
           </div>
-
           {loading ? <Spinner /> : data.projects.length === 0 ? (
             <div className="empty-state">
               <h3>No projects match yet</h3>
               <p>Try clearing a filter or searching a broader term.</p>
+              {topFreelancers.length > 0 && (
+                <div style={{ marginTop: 32, textAlign: 'left' }}>
+                  <h4 style={{ marginBottom: 14 }}>In the meantime, here's some top-rated talent</h4>
+                  <div className="featured-strip">
+                    {topFreelancers.map((f) => <FreelancerCard f={f} key={f.id} />)}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="card-grid">
