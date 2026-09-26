@@ -5,6 +5,7 @@ import ProjectCard from '../components/ProjectCard.jsx';
 import FreelancerCard from '../components/FreelancerCard.jsx';
 import Spinner from '../components/Spinner.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import heroIllustration from '../assets/working-remotely.png';
 
 export default function Home() {
   const [stats, setStats] = useState(null);
@@ -45,12 +46,17 @@ export default function Home() {
 
   if (loading) return <Spinner />;
 
+  const popularCategories = (meta?.categories ?? ['Designer', 'Web Developer', 'Software Engineer']).slice(0, 3);
+  const chartCategories = (meta?.categories ?? []).slice(0, 4);
+  const maxCount = Math.max(1, ...chartCategories.map((c) => meta?.categoryCounts?.[c] || 1));
+
   return (
     <>
       <section className="hero">
+        <span className="hero-deco" aria-hidden="true">✳</span>
         <div className="container hero-grid">
           <div>
-            <span className="hero-eyebrow">Freelance marketplace for Ethiopia and beyond</span>
+            <span className="hero-eyebrow"><span className="dot" /> Freelance marketplace for Ethiopia and beyond</span>
             <h1>{isClient ? 'Hire vetted freelancers, without the guesswork.' : 'Real work, real freelancers, no clutter in between.'}</h1>
             <p className="lead">
               {isClient
@@ -63,8 +69,14 @@ export default function Home() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
-              <button className="btn btn--primary" type="submit">Search</button>
+              <button className="search-submit" type="submit" aria-label="Search">⌕</button>
             </form>
+            <div className="popular-row">
+              <span className="p-label">Popular:</span>
+              {popularCategories.map((c) => (
+                <Link key={c} to={`/projects?category=${encodeURIComponent(c)}`} className="popular-chip">{c}</Link>
+              ))}
+            </div>
             <div className="hero-actions">
               {isClient ? (
                 <>
@@ -85,19 +97,26 @@ export default function Home() {
               )}
             </div>
           </div>
-          <div className="hero-stats">
-            <div className="stat-card">
-              <div className="num">{stats?.openProjects ?? 0}+</div>
-              <div className="label">Open projects right now</div>
-            </div>
-            <div className="stat-card">
-              <div className="num">{stats?.freelancers ?? 0}+</div>
-              <div className="label">Freelancers ready to work</div>
-            </div>
-            <div className="stat-card">
-              <div className="num">{stats?.hires ?? 0}+</div>
-              <div className="label">Successful hires made</div>
-            </div>
+
+          <div className="hero-visual">
+            <div className="hero-blob" aria-hidden="true" />
+            <img src={heroIllustration} alt="" className="hero-illustration" aria-hidden="true" />
+
+            {chartCategories.length > 0 && (
+              <div className="floating-card floating-card--categories">
+                <h5>Top categories</h5>
+                <div className="mini-bars">
+                  {chartCategories.map((c) => (
+                    <div
+                      key={c}
+                      className="bar"
+                      style={{ height: `${Math.max(14, ((meta.categoryCounts[c] || 1) / maxCount) * 46)}px` }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -139,7 +158,7 @@ export default function Home() {
       {!isFreelancer && featuredFreelancers.length > 0 && (
         <section className="section container">
           <div className="section-head">
-                        <div>
+            <div>
               <h2>Top-rated freelancers</h2>
               <p>The highest-rated talent on Freelio right now.</p>
             </div>

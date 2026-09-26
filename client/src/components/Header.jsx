@@ -47,7 +47,10 @@ export default function Header() {
           {!user && (
             <>
               <Link to="/login" className="btn btn--ghost">Log in</Link>
-              <Link to="/register" className="btn btn--primary">Join free</Link>
+              <div className="header-cta">
+                <Link to="/register" className="btn btn--primary">Join free</Link>
+                <Link to="/register" className="btn-circle" aria-label="Join free">↗</Link>
+              </div>
             </>
           )}
           {user && (
