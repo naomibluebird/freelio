@@ -14,6 +14,7 @@ import freelancerRoutes from './routes/freelancers.js';
 import clientRoutes from './routes/clients.js';
 import adminRoutes from './routes/admin.js';
 import { pool } from './db.js';
+import profileRoutes from './routes/profiles.js';
 
 // Allow multiple frontend origins (Vite might use 5173 or 5174)
 const ALLOWED_ORIGINS = [
@@ -52,6 +53,7 @@ app.use('/api/saved', savedRoutes);
 app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/profiles', profileRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint not found.' }));
 

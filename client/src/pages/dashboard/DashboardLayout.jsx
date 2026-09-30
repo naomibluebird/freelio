@@ -13,7 +13,7 @@ export default function DashboardLayout() {
           {user.role === 'client' && <NavLink to={`${base}/projects`} className={({ isActive }) => (isActive ? 'active' : '')}>My projects</NavLink>}
           {user.role === 'freelancer' && <NavLink to={`${base}/applications`} className={({ isActive }) => (isActive ? 'active' : '')}>My applications</NavLink>}
           {user.role === 'freelancer' && <NavLink to={`${base}/saved`} className={({ isActive }) => (isActive ? 'active' : '')}>Saved projects</NavLink>}
-          <NavLink to={`${base}/profile`} className={({ isActive }) => (isActive ? 'active' : '')}>{user.role === 'client' ? 'Company profile' : 'Profile'}</NavLink>
+          <NavLink to={`${base}/profile`} className={({ isActive }) => (isActive ? 'active' : '')}>{user.role === 'client' ? 'Company profile' : 'My profiles'}</NavLink>
         </nav>
         <div><Outlet /></div>
       </div>

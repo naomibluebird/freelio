@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
@@ -8,17 +9,26 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS freelancer_profiles (
-  user_id INT UNSIGNED PRIMARY KEY,
-  title VARCHAR(160) DEFAULT '',
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  title VARCHAR(160) NOT NULL DEFAULT '',
   bio TEXT,
+  experience_level ENUM('entry','mid','senior')
+    NOT NULL DEFAULT 'entry',
   hourly_rate DECIMAL(10,2) DEFAULT NULL,
   rate_currency ENUM('USD','ETB') NOT NULL DEFAULT 'USD',
   location VARCHAR(120) DEFAULT '',
   experience_years TINYINT UNSIGNED DEFAULT 0,
-  availability ENUM('available','busy','unavailable') NOT NULL DEFAULT 'available',
+  availability ENUM('available','busy','unavailable')
+    NOT NULL DEFAULT 'available',
   portfolio_url VARCHAR(255) DEFAULT '',
   github_url VARCHAR(255) DEFAULT '',
+  is_primary TINYINT(1) NOT NULL DEFAULT 0,
   is_featured TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_profile_user (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -37,11 +47,13 @@ CREATE TABLE IF NOT EXISTS skills (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS freelancer_skills (
-  user_id INT UNSIGNED NOT NULL,
+  profile_id INT UNSIGNED NOT NULL,
   skill_id INT UNSIGNED NOT NULL,
-  PRIMARY KEY (user_id, skill_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+  PRIMARY KEY (profile_id, skill_id),
+  FOREIGN KEY (profile_id)
+    REFERENCES freelancer_profiles(id) ON DELETE CASCADE,
+  FOREIGN KEY (skill_id)
+    REFERENCES skills(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS projects (
@@ -79,13 +91,20 @@ CREATE TABLE IF NOT EXISTS applications (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   project_id INT UNSIGNED NOT NULL,
   freelancer_id INT UNSIGNED NOT NULL,
+  profile_id INT UNSIGNED NOT NULL,
   cover_letter TEXT NOT NULL,
   proposed_rate DECIMAL(12,2) DEFAULT NULL,
-  status ENUM('pending','shortlisted','accepted','rejected') NOT NULL DEFAULT 'pending',
+  estimated_days SMALLINT UNSIGNED DEFAULT NULL,
+  questions TEXT DEFAULT NULL,
+  status ENUM('pending','shortlisted','accepted','rejected')
+    NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_application (project_id, freelancer_id),
+  INDEX idx_application_profile (profile_id),
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-  FOREIGN KEY (freelancer_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (freelancer_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (profile_id)
+    REFERENCES freelancer_profiles(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS saved_projects (

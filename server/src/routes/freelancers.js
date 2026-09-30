@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { one, query } from '../db.js';
-import { FREELANCER_SKILLS_SQL, HttpError, setFreelancerSkills, shapeFreelancer, splitList, wrap } from '../utils.js';
+import { FREELANCER_SKILLS_SQL, HttpError, shapeFreelancer, splitList, wrap } from '../utils.js';
 import { optionalAuth, requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { AVAILABILITY, CURRENCIES } from '../constants.js';
+import { AVAILABILITY } from '../constants.js';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ const BASE_SELECT = `
     (SELECT AVG(r.rating) FROM reviews r WHERE r.freelancer_id = u.id) AS rating,
     (SELECT COUNT(*) FROM reviews r WHERE r.freelancer_id = u.id) AS review_count,
     (SELECT COUNT(*) FROM applications a WHERE a.freelancer_id = u.id AND a.status = 'accepted') AS hires
-  FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id`;
+  FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id AND fp.is_primary = 1`;
 
 const SORTS = {
   featured: 'fp.is_featured DESC, rating DESC, u.created_at DESC',
@@ -34,18 +34,18 @@ router.get('/', wrap(async (req, res) => {
 
   if (availability && AVAILABILITY.includes(availability)) { where.push('fp.availability = ?'); params.push(availability); }
   if (skill) {
-    where.push(`EXISTS (SELECT 1 FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.user_id = u.id AND s.name = ?)`);
+    where.push(`EXISTS (SELECT 1 FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.profile_id = fp.id AND s.name = ?)`);
     params.push(skill);
   }
   if (q && String(q).trim()) {
     const like = `%${String(q).trim()}%`;
     where.push(`(u.name LIKE ? OR fp.title LIKE ? OR fp.bio LIKE ? OR EXISTS (
-      SELECT 1 FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.user_id = u.id AND s.name LIKE ?))`);
+      SELECT 1 FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.profile_id = fp.id AND s.name LIKE ?))`);
     params.push(like, like, like, like);
   }
   const whereSql = `WHERE ${where.join(' AND ')}`;
 
-  const total = (await one(`SELECT COUNT(*) AS n FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id ${whereSql}`, params)).n;
+  const total = (await one(`SELECT COUNT(*) AS n FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id AND fp.is_primary = 1 ${whereSql}`, params)).n;
   const rows = await query(`${BASE_SELECT} ${whereSql} ORDER BY ${SORTS[sort] || SORTS.featured} LIMIT ? OFFSET ?`, [...params, limit, (page - 1) * limit]);
   res.json({ freelancers: rows.map(shapeFreelancer), total, page, pages: Math.max(1, Math.ceil(total / limit)) });
 }));
@@ -55,36 +55,7 @@ router.get('/featured', wrap(async (_req, res) => {
   res.json({ freelancers: rows.map(shapeFreelancer) });
 }));
 
-// My own profile (for the edit form)
-router.get('/me/profile', requireAuth, requireRole('freelancer'), wrap(async (req, res) => {
-  const row = await one(`${BASE_SELECT} WHERE u.id = ?`, [req.user.id]);
-  res.json({ profile: shapeFreelancer(row) });
-}));
-
-const profileSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  title: z.string().trim().max(160).default(''),
-  bio: z.string().trim().max(4000).default(''),
-  hourly_rate: z.coerce.number().nonnegative().optional().nullable(),
-  rate_currency: z.enum(CURRENCIES).default('USD'),
-  location: z.string().trim().max(120).default(''),
-  experience_years: z.coerce.number().int().min(0).max(60).default(0),
-  availability: z.enum(AVAILABILITY).default('available'),
-  portfolio_url: z.string().trim().max(255).default(''),
-  github_url: z.string().trim().max(255).default(''),
-  skills: z.array(z.string()).max(20).default([]),
-});
-
-router.put('/me', requireAuth, requireRole('freelancer'), validate(profileSchema), wrap(async (req, res) => {
-  const d = req.body;
-  await query('UPDATE users SET name = ? WHERE id = ?', [d.name, req.user.id]);
-  await query(
-    `UPDATE freelancer_profiles SET title=?, bio=?, hourly_rate=?, rate_currency=?, location=?, experience_years=?,
-      availability=?, portfolio_url=?, github_url=? WHERE user_id=?`,
-    [d.title, d.bio, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url, req.user.id]);
-  await setFreelancerSkills(req.user.id, d.skills);
-  res.json({ ok: true });
-}));
+// My own profile — see routes/profiles.js for the full multi-profile CRUD API.
 
 router.get('/:id', optionalAuth, wrap(async (req, res) => {
   const row = await one(`${BASE_SELECT} WHERE u.id = ? AND u.role = 'freelancer'`, [req.params.id]);

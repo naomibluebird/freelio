@@ -46,6 +46,13 @@ export default function ProjectApplicants() {
               </div>
               <p style={{ marginTop: 12, fontSize: '0.92rem', lineHeight: 1.6 }}>{a.cover_letter}</p>
               <div className="kv-row"><span className="k">Proposed rate</span><span className="v">{a.proposed_rate ? `${a.rate_currency === 'ETB' ? 'ETB ' : '$'}${a.proposed_rate}` : '—'}</span></div>
+              <div className="kv-row"><span className="k">Estimated completion</span><span className="v">{a.estimated_days ? `${a.estimated_days} day${a.estimated_days === 1 ? '' : 's'}` : '—'}</span></div>
+              {a.questions && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="meta-sm" style={{ fontWeight: 600, marginBottom: 4 }}>Questions for you</div>
+                  <p style={{ fontSize: '0.9rem', lineHeight: 1.55, color: 'var(--ink-soft)' }}>{a.questions}</p>
+                </div>
+              )}
               <div className="row-actions" style={{ marginTop: 12 }}>
                 <button className="btn btn--outline btn--sm" onClick={() => setStatus(a.id, 'shortlisted')} disabled={a.status === 'shortlisted'}>Shortlist</button>
                 <button className="btn btn--primary btn--sm" onClick={() => setStatus(a.id, 'accepted')} disabled={a.status === 'accepted'}>Accept</button>

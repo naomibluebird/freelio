@@ -25,6 +25,8 @@ export default function ProjectDetail() {
   const [applying, setApplying] = useState(false);
   const [letter, setLetter] = useState('');
   const [rate, setRate] = useState('');
+  const [days, setDays] = useState('');
+  const [questions, setQuestions] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = () => api.get(`/projects/${id}`).then(setState).finally(() => setLoading(false));
@@ -44,7 +46,12 @@ export default function ProjectDetail() {
     e.preventDefault();
     setBusy(true);
     try {
-      await api.post(`/projects/${p.id}/apply`, { cover_letter: letter, proposed_rate: rate || null });
+      await api.post(`/projects/${p.id}/apply`, {
+        cover_letter: letter,
+        proposed_rate: rate || null,
+        estimated_days: days || null,
+        questions: questions || null,
+      });
       toast('Proposal sent.', 'success');
       setApplying(false);
       load();
@@ -111,7 +118,16 @@ export default function ProjectDetail() {
                     </div>
                     <div className="field">
                       <label>Your proposed rate (optional)</label>
-                      <input type="number" min="0" value={rate} onChange={(e) => setRate(e.target.value)} />
+                      <input type="number" min="0" value={rate} onChange={(e) => setRate(e.target.value)} placeholder={p.budget_type === 'hourly' ? 'Rate per hour' : 'Total project rate'} />
+                      <span className="hint">{p.budget_type === 'hourly' ? 'This project is billed hourly.' : p.budget_type === 'monthly' ? 'This project is billed monthly.' : 'This project has a fixed price.'}</span>
+                    </div>
+                    <div className="field">
+                      <label>Estimated completion time (days, optional)</label>
+                      <input type="number" min="1" max="730" value={days} onChange={(e) => setDays(e.target.value)} placeholder="e.g. 14" />
+                    </div>
+                    <div className="field">
+                      <label>Questions for the client (optional)</label>
+                      <textarea maxLength={1000} value={questions} onChange={(e) => setQuestions(e.target.value)} placeholder="Anything you'd like clarified before starting?" />
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button className="btn btn--primary" disabled={busy}>{busy ? 'Sending…' : 'Send proposal'}</button>

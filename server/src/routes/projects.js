@@ -99,7 +99,7 @@ router.get('/:id', optionalAuth, wrap(async (req, res) => {
   let viewer = { saved: false, application: null, isOwner };
   if (req.user) {
     viewer.saved = !!(await one('SELECT 1 AS x FROM saved_projects WHERE user_id = ? AND project_id = ?', [req.user.id, row.id]));
-    viewer.application = await one('SELECT id, status, created_at FROM applications WHERE project_id = ? AND freelancer_id = ?', [row.id, req.user.id]);
+    viewer.application = await one('SELECT id, status, created_at, profile_id FROM applications WHERE project_id = ? AND freelancer_id = ?', [row.id, req.user.id]);
   }
   const more = await query(`${BASE_SELECT} WHERE p.status = 'open' AND p.id <> ? AND p.category = ? ORDER BY p.created_at DESC LIMIT 3`, [row.id, row.category]);
   res.json({ project, viewer, related: more.map(shapeProject) });
@@ -151,8 +151,11 @@ router.delete('/:id', requireAuth, wrap(async (req, res) => {
 
 // --- Applications for a project ---
 const applySchema = z.object({
+  profile_id: z.coerce.number().int().positive('Choose which profile to apply with'),
   cover_letter: z.string().trim().min(30, 'Write at least 30 characters about why you are a fit').max(4000),
   proposed_rate: z.coerce.number().nonnegative().optional().nullable(),
+  estimated_days: z.coerce.number().int().min(1, 'Estimate at least 1 day').max(730, 'Keep the estimate under 2 years').optional().nullable(),
+  questions: z.string().trim().max(1000).optional().nullable(),
 });
 
 router.post('/:id/apply', requireAuth, requireRole('freelancer'), validate(applySchema), wrap(async (req, res) => {
@@ -162,8 +165,13 @@ router.post('/:id/apply', requireAuth, requireRole('freelancer'), validate(apply
   if (await one('SELECT id FROM applications WHERE project_id = ? AND freelancer_id = ?', [project.id, req.user.id])) {
     throw new HttpError(409, 'You have already applied to this project.');
   }
-  const r = await query('INSERT INTO applications (project_id, freelancer_id, cover_letter, proposed_rate) VALUES (?,?,?,?)',
-    [project.id, req.user.id, req.body.cover_letter, req.body.proposed_rate ?? null]);
+  const profile = await one('SELECT id, title FROM freelancer_profiles WHERE id = ? AND user_id = ?', [req.body.profile_id, req.user.id]);
+  if (!profile) throw new HttpError(404, 'That profile could not be found.');
+  if (!profile.title.trim()) throw new HttpError(400, 'Give that profile a title before applying with it.');
+
+  const r = await query(
+    'INSERT INTO applications (project_id, freelancer_id, profile_id, cover_letter, proposed_rate, estimated_days, questions) VALUES (?,?,?,?,?,?,?)',
+    [project.id, req.user.id, profile.id, req.body.cover_letter, req.body.proposed_rate ?? null, req.body.estimated_days ?? null, req.body.questions || null]);
   res.status(201).json({ id: r.insertId });
 }));
 
@@ -171,9 +179,9 @@ router.get('/:id/applications', requireAuth, wrap(async (req, res) => {
   const project = await ownProject(req);
   const rows = await query(
     `SELECT a.*, u.name, u.email, fp.title, fp.hourly_rate, fp.rate_currency, fp.location, fp.experience_years, fp.portfolio_url,
-      (SELECT GROUP_CONCAT(s.name SEPARATOR ',') FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.user_id = u.id) AS skills
+      (SELECT GROUP_CONCAT(s.name SEPARATOR ',') FROM freelancer_skills fs JOIN skills s ON s.id = fs.skill_id WHERE fs.profile_id = fp.id) AS skills
      FROM applications a JOIN users u ON u.id = a.freelancer_id
-     LEFT JOIN freelancer_profiles fp ON fp.user_id = u.id
+     LEFT JOIN freelancer_profiles fp ON fp.id = a.profile_id
      WHERE a.project_id = ? ORDER BY FIELD(a.status,'accepted','shortlisted','pending','rejected'), a.created_at DESC`, [project.id]);
   res.json({ project: { id: project.id, title: project.title, currency: project.currency, status: project.status }, applications: rows.map((r) => ({ ...r, skills: splitList(r.skills) })) });
 }));
