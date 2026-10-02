@@ -4,9 +4,14 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const AVAILABILITY = ['available', 'busy', 'unavailable'];
 const CURRENT_YEAR = new Date().getFullYear();
+const LEVELS = [
+  { value: 'entry', label: 'Entry', hint: '0–2 years' },
+  { value: 'mid', label: 'Mid', hint: '3–5 years' },
+  { value: 'senior', label: 'Senior', hint: '6+ years' },
+];
 
 const emptyFreelancerInfo = {
-  title: '', bio: '', hourlyRate: '', rateCurrency: 'USD', location: '',
+  title: '', experienceLevel: '', bio: '', hourlyRate: '', rateCurrency: 'USD', location: '',
   experienceYears: 0, availability: 'available', portfolioUrl: '', githubUrl: '', skillsText: '',
 };
 
@@ -54,6 +59,10 @@ export default function Register() {
       setError('You must be at least 18 years old to join Freelio.');
       return;
     }
+    if (role === 'freelancer' && !freelancerInfo.experienceLevel) {
+      setError('Choose your experience level.');
+      return;
+    }
 
     setLoading(true);
 
@@ -69,6 +78,7 @@ export default function Register() {
       if (role === 'freelancer') {
         Object.assign(payload, {
           title: freelancerInfo.title,
+          experience_level: freelancerInfo.experienceLevel,
           bio: freelancerInfo.bio,
           hourly_rate: freelancerInfo.hourlyRate === '' ? null : Number(freelancerInfo.hourlyRate),
           rate_currency: freelancerInfo.rateCurrency,
@@ -162,6 +172,21 @@ export default function Register() {
             <div className="field">
               <label>Title</label>
               <input value={freelancerInfo.title} onChange={(e) => setF('title', e.target.value)} placeholder="e.g. Video Editor" required />
+            </div>
+            <div className="field">
+              <label>Experience level</label>
+              <div className="checkbox-row">
+                {LEVELS.map((l) => (
+                  <button
+                    type="button"
+                    key={l.value}
+                    className={`chip-toggle${freelancerInfo.experienceLevel === l.value ? ' active' : ''}`}
+                    onClick={() => setF('experienceLevel', l.value)}
+                  >
+                    {l.label} <span style={{ opacity: 0.7 }}>({l.hint})</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="field">
               <label>Bio</label>

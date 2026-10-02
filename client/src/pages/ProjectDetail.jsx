@@ -28,6 +28,8 @@ export default function ProjectDetail() {
   const [days, setDays] = useState('');
   const [questions, setQuestions] = useState('');
   const [busy, setBusy] = useState(false);
+  const [profiles, setProfiles] = useState(null);
+  const [profileId, setProfileId] = useState(null);
 
   const load = () => api.get(`/projects/${id}`).then(setState).finally(() => setLoading(false));
   useEffect(() => { setLoading(true); load(); }, [id]);
@@ -42,11 +44,23 @@ export default function ProjectDetail() {
     setState((s) => ({ ...s, viewer: { ...s.viewer, saved: r.saved } }));
   };
 
+  const startApplying = async () => {
+    setApplying(true);
+    try {
+      const { profiles: mine } = await api.get('/profiles/mine');
+      setProfiles(mine);
+      setProfileId((cur) => cur ?? (mine.find((x) => x.is_primary) || mine[0])?.id ?? null);
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  };
+
   const submitApplication = async (e) => {
     e.preventDefault();
     setBusy(true);
     try {
       await api.post(`/projects/${p.id}/apply`, {
+        profile_id: profileId,
         cover_letter: letter,
         proposed_rate: rate || null,
         estimated_days: days || null,
@@ -107,11 +121,42 @@ export default function ProjectDetail() {
               {user?.role === 'freelancer' && p.status === 'open' && (
                 viewer.application ? (
                   <>
-                    <p style={{ marginBottom: 4, fontSize: '0.9rem' }}>You applied on {new Date(viewer.application.created_at).toLocaleDateString()}.</p>
+                    <p style={{ marginBottom: 4, fontSize: '0.9rem' }}>You applied on {new Date(viewer.application.created_at).toLocaleDateString()}{viewer.application.profile_title ? ` as “${viewer.application.profile_title}”` : ''}.</p>
                     <span className={`status-pill status-${viewer.application.status}`}>{viewer.application.status}</span>
                   </>
                 ) : applying ? (
                   <form onSubmit={submitApplication}>
+                    <div className="field">
+                      <label>Apply with profile</label>
+                      {!profiles ? (
+                        <span className="hint">Loading your profiles…</span>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {profiles.map((pr) => (
+                            <label
+                              key={pr.id}
+                              style={{
+                                display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 12px', cursor: 'pointer',
+                                border: '1px solid', borderRadius: 8, fontWeight: 400,
+                                borderColor: profileId === pr.id ? 'var(--primary, #2e7d32)' : 'var(--line, #ddd)',
+                                background: profileId === pr.id ? 'var(--primary-soft, #e0f2f1)' : 'transparent',
+                              }}
+                            >
+                              <input type="radio" name="profile" checked={profileId === pr.id} onChange={() => setProfileId(pr.id)} style={{ marginTop: 4 }} />
+                              <span>
+                                <strong>{pr.title || 'Untitled profile'}</strong>
+                                {pr.is_primary && <span className="badge badge--featured" style={{ marginLeft: 6 }}>Default</span>}
+                                <span className="meta-sm" style={{ display: 'block' }}>
+                                  {pr.experience_level} level{pr.hourly_rate ? ` · ${pr.rate_currency === 'ETB' ? 'ETB ' : '$'}${pr.hourly_rate}/hr` : ''}
+                                </span>
+                                {pr.skills?.length > 0 && <span className="meta-sm" style={{ display: 'block' }}>{pr.skills.slice(0, 4).join(' · ')}</span>}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <span className="hint">The client sees this profile with your proposal. <Link to="/dashboard/freelancer/profile">Manage profiles</Link></span>
+                    </div>
                     <div className="field">
                       <label>Cover letter</label>
                       <textarea required minLength={30} value={letter} onChange={(e) => setLetter(e.target.value)} placeholder="Why are you a good fit for this project?" />
@@ -130,12 +175,12 @@ export default function ProjectDetail() {
                       <textarea maxLength={1000} value={questions} onChange={(e) => setQuestions(e.target.value)} placeholder="Anything you'd like clarified before starting?" />
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn btn--primary" disabled={busy}>{busy ? 'Sending…' : 'Send proposal'}</button>
+                      <button className="btn btn--primary" disabled={busy || !profileId}>{busy ? 'Sending…' : 'Send proposal'}</button>
                       <button type="button" className="btn btn--ghost" onClick={() => setApplying(false)}>Cancel</button>
                     </div>
                   </form>
                 ) : (
-                  <button className="btn btn--primary btn--block" onClick={() => setApplying(true)}>Apply for this project</button>
+                  <button className="btn btn--primary btn--block" onClick={startApplying}>Apply for this project</button>
                 )
               )}
               {user && (

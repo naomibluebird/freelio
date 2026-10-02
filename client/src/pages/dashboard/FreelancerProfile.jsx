@@ -4,16 +4,17 @@ import Spinner from '../../components/Spinner.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 
 const AVAILABILITY = ['available', 'busy', 'unavailable'];
+const LEVELS = ['entry', 'mid', 'senior'];
 const CURRENT_YEAR = new Date().getFullYear();
 
 const emptyForm = {
-  title: '', bio: '', hourly_rate: '', rate_currency: 'USD', location: '',
+  title: '', bio: '', experience_level: 'entry', hourly_rate: '', rate_currency: 'USD', location: '',
   experience_years: 0, availability: 'available', portfolio_url: '', github_url: '', skillsText: '',
 };
 
 function toForm(p) {
   return {
-    title: p.title || '', bio: p.bio || '', hourly_rate: p.hourly_rate ?? '', rate_currency: p.rate_currency || 'USD',
+    title: p.title || '', bio: p.bio || '', experience_level: p.experience_level || 'entry', hourly_rate: p.hourly_rate ?? '', rate_currency: p.rate_currency || 'USD',
     location: p.location || '', experience_years: p.experience_years || 0, availability: p.availability || 'available',
     portfolio_url: p.portfolio_url || '', github_url: p.github_url || '', skillsText: (p.skills || []).join(', '),
   };
@@ -57,6 +58,14 @@ function ProfileForm({ initial, initialCertifications, busy, onCancel, onSubmit 
       <div className="field-row">
         <div className="field"><label>Location</label><input value={form.location} onChange={(e) => set('location', e.target.value)} /></div>
         <div className="field"><label>Years of experience</label><input type="number" min="0" value={form.experience_years} onChange={(e) => set('experience_years', e.target.value)} /></div>
+      </div>
+      <div className="field">
+        <label>Experience level</label>
+        <div className="checkbox-row">
+          {LEVELS.map((l) => (
+            <button type="button" key={l} className={`chip-toggle${form.experience_level === l ? ' active' : ''}`} onClick={() => set('experience_level', l)}>{l}</button>
+          ))}
+        </div>
       </div>
       <div className="field">
         <label>Availability</label>
@@ -188,7 +197,7 @@ export default function FreelancerProfile() {
               <div>
                 <strong>{p.title || 'Untitled profile'}</strong>{' '}
                 {p.is_primary && <span className="badge badge--featured" style={{ marginLeft: 6 }}>Default</span>}
-                <div className="meta-sm">{p.location || 'Location not set'} · {p.experience_years} yr{p.experience_years === 1 ? '' : 's'} experience</div>
+                <div className="meta-sm">{p.experience_level ? `${p.experience_level} level · ` : ''}{p.location || 'Location not set'} · {p.experience_years} yr{p.experience_years === 1 ? '' : 's'} experience</div>
                 {p.skills?.length > 0 && <div className="tag-row" style={{ marginTop: 8 }}>{p.skills.slice(0, 6).map((s) => <span className="tag" key={s}>{s}</span>)}</div>}
                 {p.certifications?.length > 0 && (
                   <div className="meta-sm" style={{ marginTop: 6 }}>
