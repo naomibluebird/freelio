@@ -99,7 +99,10 @@ router.get('/:id', optionalAuth, wrap(async (req, res) => {
   let viewer = { saved: false, application: null, isOwner };
   if (req.user) {
     viewer.saved = !!(await one('SELECT 1 AS x FROM saved_projects WHERE user_id = ? AND project_id = ?', [req.user.id, row.id]));
-    viewer.application = await one('SELECT id, status, created_at, profile_id FROM applications WHERE project_id = ? AND freelancer_id = ?', [row.id, req.user.id]);
+    viewer.application = await one(
+      `SELECT a.id, a.status, a.created_at, a.profile_id, fp.title AS profile_title
+       FROM applications a LEFT JOIN freelancer_profiles fp ON fp.id = a.profile_id
+       WHERE a.project_id = ? AND a.freelancer_id = ?`, [row.id, req.user.id]);
   }
   const more = await query(`${BASE_SELECT} WHERE p.status = 'open' AND p.id <> ? AND p.category = ? ORDER BY p.created_at DESC LIMIT 3`, [row.id, row.category]);
   res.json({ project, viewer, related: more.map(shapeProject) });

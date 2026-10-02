@@ -13,7 +13,7 @@ router.get('/stats', wrap(async (_req, res) => {
     one(`SELECT COUNT(*) AS n FROM projects WHERE status = 'open'`),
     one('SELECT COUNT(*) AS n FROM applications'),
     one('SELECT COUNT(*) AS n FROM projects WHERE is_featured = 1'),
-    one('SELECT COUNT(*) AS n FROM freelancer_profiles WHERE is_featured = 1'),
+    one('SELECT COUNT(DISTINCT user_id) AS n FROM freelancer_profiles WHERE is_featured = 1'),
   ]);
   res.json({
     users: users.n, projects: projects.n, openProjects: open.n, applications: applications.n,
@@ -31,7 +31,7 @@ router.get('/projects', wrap(async (_req, res) => {
 
 router.get('/freelancers', wrap(async (_req, res) => {
   const rows = await query(
-    `SELECT u.id, u.name, fp.title, fp.is_featured FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id ORDER BY u.created_at DESC LIMIT 200`);
+    `SELECT u.id, u.name, fp.title, fp.is_featured FROM users u JOIN freelancer_profiles fp ON fp.user_id = u.id AND fp.is_primary = 1 ORDER BY u.created_at DESC LIMIT 200`);
   res.json({ freelancers: rows.map((r) => ({ ...r, is_featured: !!r.is_featured })) });
 }));
 

@@ -1,10 +1,10 @@
-
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('freelancer','client','admin') NOT NULL DEFAULT 'freelancer',
+  date_of_birth DATE DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -30,6 +30,16 @@ CREATE TABLE IF NOT EXISTS freelancer_profiles (
     ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_profile_user (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS certifications (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  profile_id INT UNSIGNED NOT NULL,
+  name VARCHAR(160) NOT NULL,
+  issuer VARCHAR(160) DEFAULT '',
+  year SMALLINT UNSIGNED DEFAULT NULL,
+  INDEX idx_cert_profile (profile_id),
+  FOREIGN KEY (profile_id) REFERENCES freelancer_profiles(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS client_profiles (

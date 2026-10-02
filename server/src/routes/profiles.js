@@ -4,7 +4,7 @@ import { one, query } from '../db.js';
 import { FREELANCER_SKILLS_SQL, HttpError, loadCertifications, setProfileCertifications, setProfileSkills, splitList, wrap } from '../utils.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { AVAILABILITY, CURRENCIES } from '../constants.js';
+import { AVAILABILITY, CURRENCIES, LEVELS } from '../constants.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('freelancer'));
@@ -12,7 +12,7 @@ router.use(requireAuth, requireRole('freelancer'));
 const MAX_PROFILES = 5;
 
 const PROFILE_SELECT = `
-  SELECT fp.id, fp.user_id, fp.title, fp.bio, fp.hourly_rate, fp.rate_currency, fp.location, fp.experience_years,
+  SELECT fp.id, fp.user_id, fp.title, fp.bio, fp.experience_level, fp.hourly_rate, fp.rate_currency, fp.location, fp.experience_years,
     fp.availability, fp.portfolio_url, fp.github_url, fp.is_primary, fp.created_at,
     ${FREELANCER_SKILLS_SQL} AS skills
   FROM freelancer_profiles fp`;
@@ -34,6 +34,7 @@ const certificationField = z.object({
 const profileSchema = z.object({
   title: z.string().trim().min(2, 'Give this profile a title, e.g. Video Editor').max(160),
   bio: z.string().trim().max(4000).default(''),
+  experience_level: z.enum(LEVELS).default('entry'),
   hourly_rate: z.coerce.number().nonnegative().optional().nullable(),
   rate_currency: z.enum(CURRENCIES).default('USD'),
   location: z.string().trim().max(120).default(''),
@@ -51,9 +52,9 @@ router.post('/', validate(profileSchema), wrap(async (req, res) => {
 
   const d = req.body;
   const result = await query(
-    `INSERT INTO freelancer_profiles (user_id, title, bio, hourly_rate, rate_currency, location, experience_years,
-      availability, portfolio_url, github_url, is_primary) VALUES (?,?,?,?,?,?,?,?,?,?,0)`,
-    [req.user.id, d.title, d.bio, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url]);
+    `INSERT INTO freelancer_profiles (user_id, title, bio, experience_level, hourly_rate, rate_currency, location, experience_years,
+      availability, portfolio_url, github_url, is_primary) VALUES (?,?,?,?,?,?,?,?,?,?,?,0)`,
+    [req.user.id, d.title, d.bio, d.experience_level, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url]);
   await setProfileSkills(result.insertId, d.skills);
   await setProfileCertifications(result.insertId, d.certifications);
   res.status(201).json({ id: result.insertId });
@@ -69,9 +70,9 @@ router.put('/:id', validate(profileSchema), wrap(async (req, res) => {
   await ownProfile(req);
   const d = req.body;
   await query(
-    `UPDATE freelancer_profiles SET title=?, bio=?, hourly_rate=?, rate_currency=?, location=?, experience_years=?,
+    `UPDATE freelancer_profiles SET title=?, bio=?, experience_level=?, hourly_rate=?, rate_currency=?, location=?, experience_years=?,
       availability=?, portfolio_url=?, github_url=? WHERE id=?`,
-    [d.title, d.bio, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url, req.params.id]);
+    [d.title, d.bio, d.experience_level, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url, req.params.id]);
   await setProfileSkills(req.params.id, d.skills);
   await setProfileCertifications(req.params.id, d.certifications);
   res.json({ ok: true });

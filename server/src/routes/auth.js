@@ -5,7 +5,7 @@ import { one, query } from '../db.js';
 import { wrap, HttpError, setProfileSkills, setProfileCertifications } from '../utils.js';
 import { validate } from '../middleware/validate.js';
 import { COOKIE_NAME, cookieOptions, optionalAuth, requireAuth, signToken } from '../middleware/auth.js';
-import { AVAILABILITY, CURRENCIES } from '../constants.js';
+import { AVAILABILITY, CURRENCIES, LEVELS } from '../constants.js';
 
 const router = Router();
 
@@ -43,6 +43,7 @@ const freelancerRegisterSchema = z.object({
   role: z.literal('freelancer'),
   ...identityFields,
   title: z.string().trim().min(2, 'Tell clients what you do, e.g. Video Editor').max(160),
+  experience_level: z.enum(LEVELS, { errorMap: () => ({ message: 'Choose your experience level' }) }),
   bio: z.string().trim().max(4000).optional().default(''),
   hourly_rate: z.coerce.number().nonnegative().optional().nullable(),
   rate_currency: z.enum(CURRENCIES).default('USD'),
@@ -79,9 +80,9 @@ router.post('/register', validate(registerSchema), wrap(async (req, res) => {
 
   if (d.role === 'freelancer') {
     const profileResult = await query(
-      `INSERT INTO freelancer_profiles (user_id, title, bio, hourly_rate, rate_currency, location, experience_years,
-        availability, portfolio_url, github_url, is_primary) VALUES (?,?,?,?,?,?,?,?,?,?,1)`,
-      [id, d.title, d.bio, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url]);
+      `INSERT INTO freelancer_profiles (user_id, title, bio, experience_level, hourly_rate, rate_currency, location, experience_years,
+        availability, portfolio_url, github_url, is_primary) VALUES (?,?,?,?,?,?,?,?,?,?,?,1)`,
+      [id, d.title, d.bio, d.experience_level, d.hourly_rate ?? null, d.rate_currency, d.location, d.experience_years, d.availability, d.portfolio_url, d.github_url]);
     await setProfileSkills(profileResult.insertId, d.skills);
     await setProfileCertifications(profileResult.insertId, d.certifications);
   } else {
