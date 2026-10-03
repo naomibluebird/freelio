@@ -22,8 +22,8 @@ export default function Header() {
     <header className="site-header">
       <div className="container">
         <Link to="/" className="brand">
-          <span className="brand-mark" style={{ fontStyle: 'italic' }}>F</span>
-          <span className="brand-text">Freelio</span>
+          <span className="brand-mark" style={{ fontStyle: 'italic' }}>A</span>
+          <span className="brand-text">Alengta</span>
         </Link>
 
         <nav className="nav-links">

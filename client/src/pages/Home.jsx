@@ -160,7 +160,7 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Top-rated freelancers</h2>
-              <p>The highest-rated talent on Freelio right now.</p>
+              <p>The highest-rated talent on Alegnta right now.</p>
             </div>
             <Link to="/freelancers" className="btn btn--outline btn--sm">View all talent</Link>
           </div>
@@ -173,7 +173,7 @@ export default function Home() {
       <section className="section container">
         <div className="section-head">
           <div>
-            <h2>How Freelio works</h2>
+            <h2>How Alegnta works</h2>
             <p>A simple path whether you're hiring or looking for work.</p>
           </div>
         </div>

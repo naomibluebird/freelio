@@ -59,7 +59,7 @@ export default function Login() {
           <button className="btn btn--primary btn--block" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
         </form>
         <p style={{ marginTop: 18, fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
-          New to Freelio? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
+          New to Alegnta? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
         </p>
       </div>
     </div>

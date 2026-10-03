@@ -56,7 +56,7 @@ export default function Register() {
     setError('');
 
     if (formData.dateOfBirth > maxDob) {
-      setError('You must be at least 18 years old to join Freelio.');
+      setError('You must be at least 18 years old to join Alegnta.');
       return;
     }
     if (role === 'freelancer' && !freelancerInfo.experienceLevel) {
@@ -105,7 +105,7 @@ export default function Register() {
 
   return (
     <div className="container" style={{ maxWidth: 700, margin: '48px auto', padding: '0 24px 64px' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 8 }}>Join Freelio</h2>
+      <h2 style={{ textAlign: 'center', marginBottom: 8 }}>Join Alegnta</h2>
       <p style={{ textAlign: 'center', color: 'var(--ink-soft)', marginBottom: 24 }}>
         {role === 'freelancer' ? 'Set up your profile now — clients will see this when you apply.' : 'It takes less than a minute.'}
       </p>

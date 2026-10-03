@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="footer-grid">
           <div className="footer-col" style={{ maxWidth: 280 }}>
             <div className="brand" style={{ fontSize: '1.15rem', marginBottom: 10 }}>
-              <span className="brand-mark">F</span>Freelio
+              <span className="brand-mark">A</span>Alengta
             </div>
             <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem', lineHeight: 1.6 }}>
               A marketplace connecting Ethiopian freelance talent with clients who need real work done well.
@@ -30,7 +30,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Freelio. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Alengta. All rights reserved.</span>
           <span>Built with React, Express and MySQL.</span>
         </div>
       </div>

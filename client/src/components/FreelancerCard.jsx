@@ -19,7 +19,7 @@ export default function FreelancerCard({ f }) {
       {f.rating ? (
         <div className="rating-row"><span className="stars">★ {f.rating}</span><span>({f.review_count})</span></div>
       ) : (
-        <div className="rating-row"><span>New on Freelio</span></div>
+        <div className="rating-row"><span>New on Alengta</span></div>
       )}
       <p className="desc">{f.bio}</p>
       {f.skills?.length > 0 && (

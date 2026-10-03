@@ -4,7 +4,7 @@ import { one } from '../db.js';
 
 const SECRET = () => process.env.JWT_SECRET || 'dev-secret-change-me';
 
-export const COOKIE_NAME = 'freelio_token';
+export const COOKIE_NAME = 'alengta_token';
 
 export const cookieOptions = () => ({
   httpOnly: true,

@@ -4,7 +4,7 @@ export default function HowItWorks() {
   return (
     <div className="container" style={{ padding: '64px 0' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', marginBottom: '56px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '16px' }}>How Freelio works</h1>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '16px' }}>How Alegnta works</h1>
         <p className="lead" style={{ color: 'var(--ink-soft)', fontSize: '1.1rem' }}>
           A simple path whether you're hiring or looking for work. No clutter, just real work.
         </p>
